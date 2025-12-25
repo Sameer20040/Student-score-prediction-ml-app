@@ -8,15 +8,13 @@ os.makedirs(LOG_DIR, exist_ok=True)
 LOG_FILE = f"{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
 LOG_FILE_PATH = os.path.join(LOG_DIR, LOG_FILE)
 
-logger = logging.getLogger("ProjectMLLogger")
-logger.setLevel(logging.INFO)
-logger.propagate = False
+logging.basicConfig(
+    filename=LOG_FILE_PATH,
+    level=logging.INFO,
+    format="[%(asctime)s] %(levelname)s - %(message)s"
+)
 
-file_handler = logging.FileHandler(LOG_FILE_PATH)
-file_handler.setLevel(logging.INFO)
+logger = logging.getLogger()
 
-formatter = logging.Formatter("[%(asctime)s] %(levelname)s - %(message)s")
-file_handler.setFormatter(formatter)
-
-logger.addHandler(file_handler)
-
+if __name__ == "__main__":
+    logger.info("Logger is set up and ready to use.")

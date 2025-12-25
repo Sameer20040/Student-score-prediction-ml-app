@@ -1,5 +1,5 @@
 import sys
-import logging
+from src.logger import logger
 def error_message_detail(error, error_details: sys):## Function to extract error details
     _, _, exc_tb = error_details.exc_info()## Get the traceback object
     file_name = exc_tb.tb_frame.f_code.co_filename ## Get the filename where the exception occurred
@@ -13,3 +13,9 @@ class CustomException(Exception):### Custom exception class inheriting from the 
 
     def __str__(self): ## String representation of the exception
         return self.error_message
+if __name__ == "__main__":
+    try:
+        a = 1 / 0 ## Example to raise a ZeroDivisionError
+    except Exception as e:
+        logger.info("An exception occurred")## Log the occurrence of an exception
+        raise CustomException(e, sys) ## Raise the custom exception with details
