@@ -15,15 +15,16 @@ from src.logger import logger
 
 from src.utils import save_object
 
-
+# defining preprocessing object will be saved and where it will be saved
 @dataclass
 class DataTransformationConfig:
     preprocessor_obj_file_path: str=os.path.join('artifacts','preprocessor.pkl')
-
+# handles all data transformation tasks and preprocessing logic and steps
 class DataTransformation:
-    def __init__(self):
+    def __init__(self): # makes file path accessible inside the class
         self.data_transformation_config=DataTransformationConfig()
     
+    # this method creates and returns the preprocessing pipline and object
     def get_data_transformer_object(self):
         # This function is responsible for data transformation
         try:
@@ -32,23 +33,23 @@ class DataTransformation:
 
             num_pipeline=Pipeline(
                 steps=[
-                    ('imputer',SimpleImputer(strategy='median')),
-                    ('scaler',StandardScaler())
+                    ('imputer',SimpleImputer(strategy='median')), # replace missing values with median
+                    ('scaler',StandardScaler())# standardize the numerical columns mean=0 variance=1
                 ]
             )
 
             cat_pipeline=Pipeline(
                 steps=[
                     ('imputer',SimpleImputer(strategy='most_frequent')),
-                    ('one_hot_encoder',OneHotEncoder(handle_unknown='ignore')),
-                    ('scaler',StandardScaler(with_mean=False))
+                    ('one_hot_encoder',OneHotEncoder(handle_unknown='ignore')), # convert categorical columns to numerical using one hot encoding and avoids errors for unseen categories
+                    ('scaler',StandardScaler(with_mean=False, with_std=True)) # with_mean=False to avoid centering sparse matrix
                 ]
             )
             logger.info('Numerical and categorical pipelines created')
             logger.info(f'Numerical columns: {numerical_columns}')
             logger.info(f'Categorical columns: {categorical_columns}')
 
-
+            # Combining both numerical and categorical pipelines using into one preprocessinf step
             preprocessor=ColumnTransformer(
                 transformers=[
                     ('num_pipeline',num_pipeline,numerical_columns),
@@ -63,6 +64,8 @@ class DataTransformation:
             logger.info("Exception occurred in data transformation")
             raise CustomException(e,sys)
 
+
+    # main function to initiate data transformation
     def initiate_data_transformation(self,train_path,test_path):
         try:
             # Reading train and test data
@@ -71,7 +74,8 @@ class DataTransformation:
             logger.info("Read train and test data completed")
 
             logger.info("Obtaining preprocessor object")
-
+ 
+            # builds the preprocessing pipeline
             preprocessing_obj=self.get_data_transformer_object()
             target_column_name='math_score'
             numerical_columns=['writing_score','reading_score']
@@ -88,6 +92,8 @@ class DataTransformation:
             input_feature_test_arr=preprocessing_obj.transform(input_feature_test_df)
             logger.info("Transformation complete")
            
+
+           # combined transforemd features and target column into oen numpy array and this required for model training pipeline
             train_arr=np.c_[input_feature_train_arr,np.array(target_feature_train_df)]
             test_arr=np.c_[input_feature_test_arr,np.array(target_feature_test_df)]
             
@@ -98,6 +104,8 @@ class DataTransformation:
                 obj=preprocessing_obj
             )
 
+
+            # preprocess training and testing array along with the path of saved preprocessor
             return(
                 train_arr,
                 test_arr,
@@ -108,3 +116,11 @@ class DataTransformation:
             logger.info("Exception occurred in initiate_data_transformation")
             raise CustomException(e,sys)
 
+
+
+# reads raw data 
+# Hndles missing values
+# encodes categorical features
+# scales numerical features
+# saves the preprocessor object
+# returns transformed training and testing arrays

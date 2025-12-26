@@ -1,6 +1,6 @@
 from src.components.data_ingestion import DataIngestion
 from src.components.data_transformation import DataTransformation
-# from src.components.model_trainer import ModelTrainer
+from src.components.model_trainer import ModelTrainer
 
 if __name__ == "__main__":
     ingestion = DataIngestion()
@@ -11,5 +11,5 @@ if __name__ == "__main__":
         train_path, test_path
     )
 
-    # trainer = ModelTrainer()
-    # trainer.initiate_model_trainer(train_arr, test_arr)
+    trainer = ModelTrainer()
+    print(trainer.initiate_model_trainer(train_arr, test_arr))
