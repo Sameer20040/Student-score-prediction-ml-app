@@ -55,34 +55,80 @@ class ModelTrainer:
                 'AdaBoost Regressor':AdaBoostRegressor()
             }
             
+            
+            params={
+                "Decision Tree Regressor":{
+                    'criterion':['squared_error','friedman_mse','absolute_error','poisson'],
+                    # 'splitter':['best','random'],
+                    # 'max_features':['sqrt','log2']
+                },
+                "Random Forest Regressor":{
+                    # 'criterion':['squared_error','friedman_mse','absolute_error','poisson'],
+                    # 'splitter':['best','random'],
+                    'max_features':['sqrt','log2']
+                },
+                "Linear Regression": {},
 
-            model_report:dict=evaluate_models(X_train=X_train,y_train=y_train,X_test=X_test,y_test=y_test,models=models)
+                "Ridge Regression": {
+                    "alpha": [0.01, 0.1, 1, 10, 100]
+                },
+
+                "Lasso Regression": {
+                    "alpha": [0.01, 0.1, 1, 10]
+                },
+
+                "KNN Regressor":{
+                    'n_neighbors':[5,7,9,11]
+                },
+                "SVR": {
+                    "kernel": ["rbf", "linear"],
+                    "C": [0.1, 1, 10],
+                    "gamma": ["scale", "auto"]
+                },
+
+                "AdaBoost Regressor": {
+                    "n_estimators": [50, 100, 200],
+                    "learning_rate": [0.01, 0.1, 1.0]
+                },
+
+                "XGB Regressor": {
+                    "n_estimators": [100, 200],
+                    "max_depth": [3, 6],
+                    "learning_rate": [0.05, 0.1],
+                    "subsample": [0.8, 1.0]
+                },
+
+                "CatBoost Regressor": {
+                    "iterations": [200, 500],
+                    "depth": [4, 6],
+                    "learning_rate": [0.05, 0.1]
+                }
+            }
+
+            model_report,trained_models=evaluate_models(
+                X_train,y_train,X_test,y_test,models,params
+            )
 
             # To get the best model score from the dict
-            best_model_score = max(sorted(model_report.values()))
             # To get the best model name from the dict
-            best_model_name = list(model_report.keys())[
-                list(model_report.values()).index(best_model_score)
-            ]
-
-            best_model = models[best_model_name]
+            best_model_name = max(model_report,key=model_report.get)
+            best_model=trained_models[best_model_name]
+            best_model_score=model_report[best_model_name]
+        
             logger.info(f'Best model found: {best_model_name} with r2 score: {best_model_score}')
 
             if best_model_score < 0.6:
-                raise CustomException("No best model found")
-            logger.info("Evaluating best model on test data")
-            y_pred = best_model.predict(X_test)
-            r2_square = r2_score(y_test, y_pred)
+                raise CustomException("No best model found",sys)
 
-
-            logger.info(f'R2 score of best model on test data: {r2_square}')
+            y_pred=best_model.predict(X_test)
+            final_r2=r2_score(y_test,y_pred)
 
             save_object(
-                file_path=self.model_trainer_config.trained_model_file_path,
-                obj=best_model
+                self.model_trainer_config.trained_model_file_path,
+                best_model
             )
 
-            return r2_square
+            return final_r2
 
         except Exception as e:
             logger.info("Exception occurred at model training")
