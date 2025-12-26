@@ -1,47 +1,70 @@
-from flask import Flask, request, render_template
+import streamlit as st
 import pandas as pd
-from src.pipeline.predict_pipeline import CustomData, PredictPipeline
+import numpy as np
+import os
+import dill # Requires 'pip install dill'
 
-application = Flask(__name__)
-app = application
+# Function to load objects using dill
+def load_object(file_path):
+    with open(file_path, "rb") as f:
+        return dill.load(f)
 
+# --- App Configuration ---
+st.set_page_config(page_title="Student Score Predictor")
+st.title("Math Score Prediction")
 
-@app.route('/')
-def index():
-    return render_template('index.html')
+# Define paths to your artifacts
+MODEL_PATH = os.path.join("artifacts", "model.pkl")
+PREPROCESSOR_PATH = os.path.join("artifacts", "preprocessor.pkl")
 
+# --- User Input Form ---
+with st.form("input_form"):
+    st.subheader("Enter Student Details")
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        gender = st.selectbox("Gender", ["female", "male"])
+        race = st.selectbox("Race/Ethnicity", ["group A", "group B", "group C", "group D", "group E"])
+        parent_edu = st.selectbox("Parental Education", [
+            "some high school", "high school", "some college", 
+            "associate's degree", "bachelor's degree", "master's degree"
+        ])
+        lunch = st.selectbox("Lunch", ["standard", "free/reduced"])
+        
+    with col2:
+        test_prep = st.selectbox("Test Prep Course", ["none", "completed"])
+        reading_score = st.slider("Reading Score", 0, 100, 70)
+        writing_score = st.slider("Writing Score", 0, 100, 70)
 
-@app.route('/predictdata', methods=['GET', 'POST'])
-def predict_datapoint():
-    if request.method == 'GET':
-        return render_template('home.html')
+    submit = st.form_submit_button("Predict Score")
 
+if submit:
+    if os.path.exists(MODEL_PATH) and os.path.exists(PREPROCESSOR_PATH):
+        try:
+            # 1. Map inputs to a DataFrame
+            input_data = pd.DataFrame({
+                "gender": [gender],
+                "race_ethnicity": [race],
+                "parental_level_of_education": [parent_edu],
+                "lunch": [lunch],
+                "test_preparation_course": [test_prep],
+                "reading_score": [reading_score],
+                "writing_score": [writing_score]
+            })
+
+            # 2. Load the artifacts
+            model = load_object(MODEL_PATH)
+            preprocessor = load_object(PREPROCESSOR_PATH)
+
+            # 3. Transform and Predict
+            transformed_data = preprocessor.transform(input_data)
+            prediction = model.predict(transformed_data)
+
+            # 4. Show Result
+            st.success(f"### Predicted Math Score: {np.round(prediction[0], 2)}")
+            
+        except Exception as e:
+            st.error(f"Prediction failed: {e}")
     else:
-        reading_score = request.form.get('reading_score')
-        writing_score = request.form.get('writing_score')
-
-        # Safety check
-        if reading_score is None or writing_score is None:
-            return render_template('home.html', results="Please fill all fields")
-
-        data = CustomData(
-            gender=request.form.get('gender'),
-            race_ethnicity=request.form.get('race_ethnicity'),
-            parental_level_of_education=request.form.get('parental_level_of_education'),
-            lunch=request.form.get('lunch'),
-            test_preparation_course=request.form.get('test_preparation_course'),
-            reading_score=float(reading_score),
-            writing_score=float(writing_score)
-        )
-
-        pred_df = data.get_data_as_data_frame()
-        print(pred_df)
-
-        predict_pipeline = PredictPipeline()
-        results = predict_pipeline.predict(pred_df)
-
-        return render_template('home.html', results=results[0])
-
-
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", debug=True)
+        st.warning("Artifacts not found! Please check the 'artifacts/' folder.")
