@@ -7,3 +7,4 @@ catboost
 xgboost
 lightgbm
 dill
+streamlit
