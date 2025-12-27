@@ -128,9 +128,5 @@ if uploaded_file:
     except Exception as e:
         st.error("❌ Batch prediction failed")
         logging.error(e)
-
-# ----------------------------------------------------
-# Footer
-# ----------------------------------------------------
 st.divider()
-st.caption("🚀 Built by Sameer Gandhi | ML • Streamlit • Docker")
+st.caption("Built by Sameer Gandhi | ML • Streamlit • Docker")
