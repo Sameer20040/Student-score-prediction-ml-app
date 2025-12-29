@@ -8,6 +8,8 @@ import logging
 # ----------------------------------------------------
 # Logging Configuration
 # ----------------------------------------------------
+# save runtime logs to app.log
+# helps debug predictions issues in production
 os.makedirs("logs", exist_ok=True)
 logging.basicConfig(
     filename="logs/app.log",
@@ -18,6 +20,7 @@ logging.basicConfig(
 # ----------------------------------------------------
 # Utility Functions
 # ----------------------------------------------------
+#improve app performance
 @st.cache_resource
 def load_object(file_path):
     with open(file_path, "rb") as f:
@@ -32,12 +35,17 @@ def load_artifacts():
 # ----------------------------------------------------
 # Streamlit Config
 # ----------------------------------------------------
+
+# set browser tab title 
+# wide layout for betetr ui
+# app heading
 st.set_page_config(page_title="Student Score Predictor", layout="wide")
 st.title("📘 Student Math Score Prediction")
 
 # ----------------------------------------------------
 # Load Model & Preprocessor
 # ----------------------------------------------------
+
 try:
     model, preprocessor = load_artifacts()
 except Exception as e:
@@ -48,6 +56,7 @@ except Exception as e:
 # ----------------------------------------------------
 # Single Prediction
 # ----------------------------------------------------
+
 st.subheader("🔢 Single Student Prediction")
 
 with st.form("single_input"):
